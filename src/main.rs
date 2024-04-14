@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use actix_web::{web, App, HttpServer};
+use rust_actix_sqlx::domain::user::AppState;
 use rust_actix_sqlx::repositories::user_repository::UserRepository;
 use sqlx::{Postgres, Pool, postgres::PgPoolOptions};
 
@@ -13,8 +14,10 @@ use dotenv::dotenv;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    std::env::set_var("RUST_LOG", "debug");
 
     dotenv().ok();
+    env_logger::init();
 
     // inital database connection
     let database_url: String = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -48,9 +51,19 @@ async fn main() -> std::io::Result<()> {
     println!("Listening on: 0.0.0.0:8080");
     HttpServer::new(move || {
         App::new()
+            .app_data(
+                web::Data::new(
+                    AppState {
+                        user_service: user_service.clone()
+                    }
+                )
+            )
             .route("/health-check", actix_web::web::get().to(routes::health_check::health_check))
-            .configure(routes::user_handler::user_handler::config)
             .configure(routes::auth_handler::auth_handler::config)
+            .service(
+                web::scope("/user")
+                    .configure(routes::user_handler::user_handler::config)
+            )
     })
 
     .bind(("0.0.0.0", 8080))?

@@ -8,6 +8,7 @@ pub trait UserService: Sync + Send {
     async fn get_user_by_id(&self, id: i32) -> Option<String>;
 }
 
+#[derive(Clone)]
 pub struct UserServiceImpl {
     user_repository: Arc<dyn UserRepository>
 }

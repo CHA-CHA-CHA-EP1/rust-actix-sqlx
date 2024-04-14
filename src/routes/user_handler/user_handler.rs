@@ -1,9 +1,16 @@
 use actix_web::{web, Responder, HttpResponse };
 
-pub async fn get_user_by_id(path: web::Path<u32>) -> impl Responder {
+use crate::services::user_service::UserService;
+
+pub async fn get_user_by_id(
+    service: web::Data<crate::domain::user::AppState>,
+    path: web::Path<i32>,
+) -> impl Responder {
+
     let id = path.into_inner();
-    let response_text = format!("get user by id handler, id: {}", id);
-    HttpResponse::Ok().body(response_text)
+    let name = service.user_service.get_user_by_id(id).await.unwrap();
+
+    HttpResponse::Ok().body(format!("get user by id handler, id: {}, name: {}", id, name))
 }
 
 pub async fn get_users() -> impl Responder {
@@ -17,12 +24,9 @@ pub async fn delete_user_by_id(path: web::Path<u32>) -> impl Responder {
 }
  
 pub fn config(cfg: &mut web::ServiceConfig) {
-    let scope = web::scope("/user");
-    cfg.service(
-        scope
-            .route("", web::get().to(get_users))
-            .route("/{id}", web::get().to(get_user_by_id))
-            .route("/{id}", web::delete().to(delete_user_by_id))
-    );
+    cfg
+        .route("/{id}", web::get().to(get_user_by_id))
+        .route("/", web::get().to(get_users))
+        .route("/{id}", web::delete().to(delete_user_by_id));
 }
 
