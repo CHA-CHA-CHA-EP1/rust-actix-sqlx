@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use actix_web::{body::BoxBody, web, HttpRequest, HttpResponse, Responder };
 use serde::{Deserialize, Serialize};
+use crate::{domain::user, services::user_service::UserService};
 
 #[derive(Deserialize)]
 pub struct Signin {
@@ -9,16 +10,7 @@ pub struct Signin {
     password: String
 }
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct SignUp {
-    full_name: String,
-    age: u8,
-    email: String,
-    username: String,
-    password: String,
-}
-
-impl Responder for SignUp {
+impl Responder for user::UserSignup {
     type Body = BoxBody;
 
     fn respond_to(self, _req: &HttpRequest) -> HttpResponse {
@@ -33,14 +25,12 @@ pub async fn signin(signin: web::Json<Signin>) -> impl Responder {
     format!("Signin: username: {}, password: {}", signin.username, signin.password)
 }
 
-pub async fn signup(signup: web::Json<SignUp>) -> impl Responder {
-    println!("SignUp: {:?}", signup);
-    SignUp {
-        full_name: signup.full_name.clone(),
-        age: signup.age.clone(),
-        email: signup.email.clone(),
-        username: signup.username.clone(),
-        password: signup.password.clone(),
+pub async fn signup(signup: web::Json<user::UserSignup>, service: web::Data<crate::domain::user::AppState>) -> impl Responder {
+    let user_signup = signup.into_inner();
+    let result = service.user_service.create_user(user_signup).await;
+    match result {
+        Ok(_) => HttpResponse::Ok().json("User created successfully"),
+        Err(_) => HttpResponse::Ok().json("Failed to create user")
     }
 }
 
