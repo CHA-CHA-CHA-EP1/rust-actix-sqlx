@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use crate::repositories::user_repository::{self, UserRepository};
+use crate::{domain::user::UserSignup, repositories::user_repository::{self, UserRepository}};
 
 #[async_trait]
 pub trait UserService: Sync + Send {
     async fn get_user_by_id(&self, id: i32) -> Option<String>;
+    async fn create_user(&self, user: UserSignup) -> Result<(), String>;
 }
 
 #[derive(Clone)]
@@ -28,6 +29,20 @@ impl UserService for UserServiceImpl {
         match user_name {
             Some(name) => Some(name),
             None => None
+        }
+    }
+
+    async fn create_user(&self, user: UserSignup) -> Result<(), String> {
+        let email_exists = self.user_repository.get_user_by_email(&user.email).await;
+
+        if (email_exists.is_some()) {
+            return Err("Email already exists".to_string());
+        }
+
+        let result = self.user_repository.create_user(user.clone()).await;
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e)
         }
     }
 }
