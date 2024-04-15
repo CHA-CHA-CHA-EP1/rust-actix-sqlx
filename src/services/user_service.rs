@@ -1,13 +1,14 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use crate::{domain::user::{UserSignup, Signin}, repositories::user_repository::{self, UserRepository}};
+use crate::{domain::user::{Claims, Signin, SigninResponse, UserSignup}, repositories::user_repository::{self, UserRepository}};
+use jsonwebtoken::{encode, Header, Algorithm, EncodingKey};
 
 #[async_trait]
 pub trait UserService: Sync + Send {
     async fn get_user_by_id(&self, id: i32) -> Option<String>;
     async fn create_user(&self, user: UserSignup) -> Result<(), String>;
-    async fn signin(&self, signin: Signin) -> Result<(), String>;
+    async fn signin(&self, signin: Signin) -> Result<SigninResponse, String>;
 }
 
 #[derive(Clone)]
@@ -56,13 +57,30 @@ impl UserService for UserServiceImpl {
         }
     }
 
-    async fn signin(&self, signin: Signin) -> Result<(), String> {
+    async fn signin(&self, signin: Signin) -> Result<SigninResponse, String> {
         let user = self.user_repository.get_user_by_username(&signin.username).await;
+
+        let key = b"secret";
+        let my_claims = Claims {
+            aud: "my_audience".to_string(),
+            sub: "my_subject".to_string(),
+            uid: 0,
+            exp: 1000000000
+        };
+
+        let token = match encode(&Header::default(), &my_claims, &EncodingKey::from_secret(key)) {
+            Ok(t) => t,
+            Err(e) => return Err(e.to_string())
+        };
+
         match user {
             Ok(user) => {
                 let password_hashed = crate::utils::hash::hash_data(&signin.password);
                 if user.password == password_hashed {
-                    Ok(())
+                    Ok(SigninResponse {
+                        token,
+                        user
+                    })
                 } else {
                     Err("Invalid password".to_string())
                 }

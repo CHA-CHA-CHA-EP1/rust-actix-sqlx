@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use actix_web::{body::BoxBody, web, HttpRequest, HttpResponse, Responder };
-use crate::{domain::user, services::user_service::UserService};
+use crate::{domain::user::{self, SigninResponse}, services::user_service::UserService};
 
 impl Responder for user::UserSignup {
     type Body = BoxBody;
@@ -21,7 +21,12 @@ pub async fn signin(
     let signin = signin.into_inner();
     let result = service.user_service.signin(signin).await;
     match result {
-        Ok(_) => HttpResponse::Ok().json("User signed in successfully"),
+        Ok(res) => HttpResponse::Ok().json(
+            SigninResponse {
+                token: res.token,
+                user: res.user
+            }
+        ),
         Err(_) => HttpResponse::Ok().json("Failed to sign in")
     }
 }

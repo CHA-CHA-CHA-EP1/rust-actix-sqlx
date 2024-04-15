@@ -8,6 +8,7 @@ use sqlx::{Postgres, Pool, postgres::PgPoolOptions};
 use rust_actix_sqlx::routes;
 use rust_actix_sqlx::services;
 use rust_actix_sqlx::repositories;
+use rust_actix_sqlx::middlewares;
 
 use dotenv::dotenv;
 
@@ -58,6 +59,7 @@ async fn main() -> std::io::Result<()> {
                     }
                 )
             )
+            .wrap(middlewares::auth_middleware::Authentication)
             .route("/health-check", actix_web::web::get().to(routes::health_check::health_check))
             .configure(routes::auth_handler::auth_handler::config)
             .service(
