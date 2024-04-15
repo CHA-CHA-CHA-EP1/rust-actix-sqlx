@@ -1,14 +1,7 @@
 use std::collections::HashMap;
 
 use actix_web::{body::BoxBody, web, HttpRequest, HttpResponse, Responder };
-use serde::{Deserialize, Serialize};
-use crate::{domain::user, services::user_service::UserService};
-
-#[derive(Deserialize)]
-pub struct Signin {
-    username: String,
-    password: String
-}
+use crate::{domain::user::{self, SigninResponse}, services::user_service::UserService};
 
 impl Responder for user::UserSignup {
     type Body = BoxBody;
@@ -21,8 +14,21 @@ impl Responder for user::UserSignup {
     }
 }
 
-pub async fn signin(signin: web::Json<Signin>) -> impl Responder {
-    format!("Signin: username: {}, password: {}", signin.username, signin.password)
+pub async fn signin(
+    signin: web::Json<user::Signin>,
+    service: web::Data<crate::domain::user::AppState>
+) -> impl Responder {
+    let signin = signin.into_inner();
+    let result = service.user_service.signin(signin).await;
+    match result {
+        Ok(res) => HttpResponse::Ok().json(
+            SigninResponse {
+                token: res.token,
+                user: res.user
+            }
+        ),
+        Err(_) => HttpResponse::Ok().json("Failed to sign in")
+    }
 }
 
 pub async fn signup(signup: web::Json<user::UserSignup>, service: web::Data<crate::domain::user::AppState>) -> impl Responder {

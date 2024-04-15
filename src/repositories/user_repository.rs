@@ -3,7 +3,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use sqlx::{Pool, Postgres};
 
-use crate::domain::user::UserSignup;
+use crate::domain::user::{User, UserSignup};
 
 #[async_trait]
 pub trait UserRepository: Sync + Send {
@@ -11,6 +11,7 @@ pub trait UserRepository: Sync + Send {
     async fn create_user(&self, user: UserSignup) -> Result<(), String>;
     async fn test_user(&self);
     async fn get_user_by_email(&self, email: &str) -> Option<String>;
+    async fn get_user_by_username(&self, username: &str) -> Result<User, String>;
 }
 
 pub struct UserRepositoryImpl {
@@ -74,5 +75,21 @@ impl UserRepository for UserRepositoryImpl {
             Err(_) => None
         }
     }
-}
 
+    async fn get_user_by_username(&self, username: &str) -> Result<User, String> {
+        let query_result = sqlx::query!("SELECT * FROM users WHERE username = $1", username)
+            .fetch_one(&*self.db)
+            .await;
+
+        match query_result {
+            Ok(user) => Ok(User {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                username: user.username,
+                password: user.password
+            }),
+            Err(_) => Err("User not found".to_string())
+        }
+    }
+}
