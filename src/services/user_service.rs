@@ -42,6 +42,10 @@ impl UserService for UserServiceImpl {
 
         let username_exists = self.user_repository.get_user_by_username(&user.username).await;
         
+        if username_exists.is_ok() {
+            return Err("Username already exists".to_string());
+        }
+
         let password_hashed = crate::utils::hash::hash_data(&user.password);
         user.password = password_hashed;
 
