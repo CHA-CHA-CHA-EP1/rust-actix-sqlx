@@ -19,6 +19,13 @@ pub struct UserSignup {
     pub password: String,
 }
 
+
+#[derive(Deserialize)]
+pub struct Signin {
+    pub username: String,
+    pub password: String,
+}
+
 #[derive(Clone)]
 pub struct AppState {
     pub user_service: UserServiceImpl,

@@ -1,14 +1,7 @@
 use std::collections::HashMap;
 
 use actix_web::{body::BoxBody, web, HttpRequest, HttpResponse, Responder };
-use serde::{Deserialize, Serialize};
 use crate::{domain::user, services::user_service::UserService};
-
-#[derive(Deserialize)]
-pub struct Signin {
-    username: String,
-    password: String
-}
 
 impl Responder for user::UserSignup {
     type Body = BoxBody;
@@ -21,7 +14,7 @@ impl Responder for user::UserSignup {
     }
 }
 
-pub async fn signin(signin: web::Json<Signin>) -> impl Responder {
+pub async fn signin(signin: web::Json<user::Signin>) -> impl Responder {
     format!("Signin: username: {}, password: {}", signin.username, signin.password)
 }
 
