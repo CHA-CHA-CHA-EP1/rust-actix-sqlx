@@ -11,6 +11,7 @@ pub trait UserRepository: Sync + Send {
     async fn create_user(&self, user: UserSignup) -> Result<(), String>;
     async fn test_user(&self);
     async fn get_user_by_email(&self, email: &str) -> Option<String>;
+    async fn get_user_by_username(&self, username: &str) -> Option<String>;
 }
 
 pub struct UserRepositoryImpl {
@@ -74,5 +75,15 @@ impl UserRepository for UserRepositoryImpl {
             Err(_) => None
         }
     }
-}
 
+    async fn get_user_by_username(&self, username: &str) -> Option<String> {
+        let query_result = sqlx::query!("SELECT * FROM users WHERE username = $1", username)
+            .fetch_one(&*self.db)
+            .await;
+
+        match query_result {
+            Ok(user) => Some(user.name),
+            Err(_) => None
+        }
+    }
+}

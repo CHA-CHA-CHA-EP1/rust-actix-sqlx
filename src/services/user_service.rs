@@ -39,6 +39,12 @@ impl UserService for UserServiceImpl {
             return Err("Email already exists".to_string());
         }
 
+        let username_exists = self.user_repository.get_user_by_username(&user.username).await;
+        
+        if (username_exists.is_some()) {
+            return Err("Username already exists".to_string());
+        }
+
         let result = self.user_repository.create_user(user.clone()).await;
         match result {
             Ok(_) => Ok(()),
