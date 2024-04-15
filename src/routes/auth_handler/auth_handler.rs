@@ -14,8 +14,16 @@ impl Responder for user::UserSignup {
     }
 }
 
-pub async fn signin(signin: web::Json<user::Signin>) -> impl Responder {
-    format!("Signin: username: {}, password: {}", signin.username, signin.password)
+pub async fn signin(
+    signin: web::Json<user::Signin>,
+    service: web::Data<crate::domain::user::AppState>
+) -> impl Responder {
+    let signin = signin.into_inner();
+    let result = service.user_service.signin(signin).await;
+    match result {
+        Ok(_) => HttpResponse::Ok().json("User signed in successfully"),
+        Err(_) => HttpResponse::Ok().json("Failed to sign in")
+    }
 }
 
 pub async fn signup(signup: web::Json<user::UserSignup>, service: web::Data<crate::domain::user::AppState>) -> impl Responder {
