@@ -8,7 +8,6 @@ use sqlx::{Postgres, Pool, postgres::PgPoolOptions};
 use rust_actix_sqlx::routes;
 use rust_actix_sqlx::services;
 use rust_actix_sqlx::repositories;
-use rust_actix_sqlx::domain;
 
 use dotenv::dotenv;
 
@@ -49,6 +48,7 @@ async fn main() -> std::io::Result<()> {
     );
 
     println!("Listening on: 0.0.0.0:8080");
+
     HttpServer::new(move || {
         App::new()
             .app_data(
