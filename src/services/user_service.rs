@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use chrono::Utc;
+use sqlx::{decode, encode};
 use crate::{domain::user::{Claims, Signin, SigninResponse, UserSignup}, repositories::user_repository::{self, UserRepository}};
-use jsonwebtoken::{encode, Header, Algorithm, EncodingKey};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 
 #[async_trait]
 pub trait UserService: Sync + Send {
@@ -61,11 +63,12 @@ impl UserService for UserServiceImpl {
         let user = self.user_repository.get_user_by_username(&signin.username).await;
 
         let key = b"secret";
+        let current_time = Utc::now();
+        let exp_time = current_time.timestamp() + 60;
+
         let my_claims = Claims {
-            aud: "my_audience".to_string(),
-            sub: "my_subject".to_string(),
-            uid: 0,
-            exp: 1000000000
+            sub: String::from("user1234"),
+            exp: exp_time,
         };
 
         let token = match encode(&Header::default(), &my_claims, &EncodingKey::from_secret(key)) {
@@ -73,12 +76,31 @@ impl UserService for UserServiceImpl {
             Err(e) => return Err(e.to_string())
         };
 
+        let new_token = encode(
+            &Header::default(),
+            &my_claims,
+            &EncodingKey::from_secret(key),
+        );
+
+        // println!("HHHHH: {:?}", new_token.clone().unwrap());
+
+        // let decoded_token = decode::<Claims>(
+        //     &new_token.unwrap(),
+        //     &DecodingKey::from_secret(key),
+        //     &Validation::new(Algorithm::default())
+        // );
+
+        // println!("Decoded Token: {:?}", decoded_token.unwrap().claims);
+
+        // `token` is a struct with 2 fields: `header` and `claims` where `claims` is your own struct.
+        // let decode_token = decode::<Claims>(&token, &DecodingKey::from_secret("secret".as_ref()), &Validation::default());
+
         match user {
             Ok(user) => {
                 let password_hashed = crate::utils::hash::hash_data(&signin.password);
                 if user.password == password_hashed {
                     Ok(SigninResponse {
-                        token,
+                        token: new_token.unwrap(),
                         user
                     })
                 } else {

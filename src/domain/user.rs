@@ -34,9 +34,7 @@ pub struct AppState {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub aud: String,
     pub sub: String,
-    pub uid: i32,
     pub exp: i64,
 }
 

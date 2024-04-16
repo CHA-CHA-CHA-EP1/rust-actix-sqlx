@@ -1,10 +1,11 @@
-use std::future::{ready, Ready};
+use std::{alloc::dealloc, future::{ready, Ready}};
 
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform}, error::ErrorUnauthorized, Error, HttpRequest, HttpResponse
 };
 use futures_util::future::LocalBoxFuture;
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
+use sqlx::decode;
 
 use crate::domain::user::Claims;
 
@@ -59,7 +60,21 @@ where
         }
 
         let bearer = bearer.replace("Bearer ", "");
-        let secret = b"secret";
+        let key = b"secret";
+
+        let decoded_token = decode::<Claims>(
+            &bearer,
+            &DecodingKey::from_secret(key),
+            &Validation::new(Algorithm::default()),
+        );
+
+        println!("Decoded token: {:?}", decoded_token);
+        match decoded_token {
+            Ok(_) => (),
+            Err(_) => return Box::pin(async {
+                Err(ErrorUnauthorized("Unauthorized"))
+            }),
+        }
 
         let fut = self.service.call(req);
 
