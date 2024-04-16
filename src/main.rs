@@ -59,11 +59,11 @@ async fn main() -> std::io::Result<()> {
                     }
                 )
             )
-            .wrap(middlewares::auth_middleware::Authentication)
             .route("/health-check", actix_web::web::get().to(routes::health_check::health_check))
             .configure(routes::auth_handler::auth_handler::config)
             .service(
                 web::scope("/user")
+                    .wrap(middlewares::auth_middleware::Authentication)
                     .configure(routes::user_handler::user_handler::config)
             )
     })
