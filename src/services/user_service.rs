@@ -62,8 +62,12 @@ impl UserService for UserServiceImpl {
 
     async fn refresh_token(&self, refresh_token: String) -> Result<SigninResponseWithToken, String> {
         let key = b"secret";
-        let validation = Validation::new(Algorithm::HS256);
+        let mut validation = Validation::new(Algorithm::HS256);
+        validation.leeway = 0;
+
         let token_data = decode::<Claims>(&refresh_token, &DecodingKey::from_secret(key), &validation);
+        let current_time = Utc::now();
+        let exp_time = current_time.timestamp();
 
         match token_data {
             Ok(token) => {
@@ -71,7 +75,7 @@ impl UserService for UserServiceImpl {
                     &Header::default(),
                     &Claims {
                         sub: token.claims.sub.clone(),
-                        exp: token.claims.exp
+                        exp: exp_time + 60
                     },
                     &EncodingKey::from_secret(key)
                 ).unwrap();
@@ -80,7 +84,7 @@ impl UserService for UserServiceImpl {
                     &Header::default(),
                     &Claims {
                         sub: token.claims.sub.clone(),
-                        exp: token.claims.exp + 60
+                        exp: exp_time + 120
                     },
                     &EncodingKey::from_secret(key)
                 ).unwrap();
@@ -105,12 +109,12 @@ impl UserService for UserServiceImpl {
 
         let my_claims = Claims {
             sub: String::from("user001"),
-            exp: exp_time,
+            exp: exp_time + 60,
         };
 
         let payload_refresh_token = Claims {
             sub: String::from("user001"),
-            exp: exp_time + 60,
+            exp: exp_time + 120,
         };
 
         let refresh_token = match encode(&Header::default(), &payload_refresh_token, &EncodingKey::from_secret(key)) {

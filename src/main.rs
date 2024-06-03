@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use rust_actix_sqlx::domain::user::AppState;
 use rust_actix_sqlx::repositories::user_repository::UserRepository;
@@ -52,7 +53,15 @@ async fn main() -> std::io::Result<()> {
     println!("Listening on: 0.0.0.0:8080");
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allow_any_method()
+            .allow_any_header()
+            .supports_credentials()
+            .max_age(3600);
+
         App::new()
+            .wrap(cors)
             .app_data(web::Data::new(AppState {
                 user_service: user_service.clone(),
             }))

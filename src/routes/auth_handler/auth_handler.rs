@@ -25,7 +25,7 @@ pub async fn signin(
             let cookie = Cookie::build("refresh_token", &res.refresh_token)
                 .http_only(true)
                 .secure(true)
-                .same_site(actix_web::cookie::SameSite::Strict)
+                // .same_site(actix_web::cookie::SameSite::Strict)
                 .finish();
 
             HttpResponse::Ok().cookie(cookie).json(
@@ -53,6 +53,7 @@ pub async fn refresh_token_with_httponly_cookie(
     service: web::Data<crate::domain::user::AppState>
 ) -> impl Responder {
     let refresh_token = req.cookie("refresh_token");
+    println!("[refresh_token] - {:?}", refresh_token);
     let refresh_token = match refresh_token {
         Some(token) => token.value().to_string(),
         None => {
@@ -66,7 +67,7 @@ pub async fn refresh_token_with_httponly_cookie(
             let cookie = Cookie::build("refresh_token", &res.refresh_token)
                 .http_only(true)
                 .secure(true)
-                .same_site(actix_web::cookie::SameSite::Strict)
+                // .same_site(actix_web::cookie::SameSite::Strict)
                 .finish();
             HttpResponse::Ok().cookie(cookie).json(
                 SigninResponseWithToken {

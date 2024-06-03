@@ -61,11 +61,13 @@ where
 
         let bearer = bearer.replace("Bearer ", "");
         let key = b"secret";
+        let mut validation = Validation::new(Algorithm::HS256);
+        validation.leeway = 0;
 
         let decoded_token = decode::<Claims>(
             &bearer,
             &DecodingKey::from_secret(key),
-            &Validation::new(Algorithm::default()),
+            &validation,
         );
 
         println!("Decoded token: {:?}", decoded_token);
