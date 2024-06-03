@@ -43,3 +43,10 @@ pub struct SigninResponse {
     pub token: String,
     pub user: User,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SigninResponseWithToken {
+    pub access_token: String,
+    pub refresh_token: String,
+}
+
